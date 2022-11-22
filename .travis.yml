@@ -1,0 +1,23 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t petarda/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true petarda/react-test npm test
+
+after_success:
+  - docker build -t petarda/multi-client ./client
+  - docker build -t petarda/multi-nginx ./nginx
+  - docker build -t petarda/multi-server ./server
+  - docker build -t petarda/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push it to the Docker hub
+  - docker push petarda/multi-client
+  - docker push petarda/multi-nginx
+  - docker push petarda/multi-server
+  - docker push petarda/multi-worker
+
